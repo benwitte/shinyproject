@@ -7,47 +7,57 @@ library(data.table)
 library(shiny)
 library(data.table)
 library(shinydashboard)
-library(shinyGlobe)
 library(leaflet)
 library(geojson)
 library(geojsonio)
 library(rgdal)
 library(sp)
 library(tigris)
+library(sf)
+library(shinythemes)
+library(googleVis)
+library(RSQLite)
 
 
 #maybe ignore this stuff
-Kivaclean = fread('~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/Kivafullyclean.csv', drop = 'V1')
-kivaglob = Kivaclean[,c('lat','long','MPI')]
+#Kivaclean = fread('~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/Kivafullyclean.csv', drop = 'V1')
+#kivaglob = Kivaclean[,c('lat','long','MPI')]
 
 
 #import geojson
-borders = geojson_read("~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/countries.geo.json", what = "sp")
+#borders = geojson_read("~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/countries.geo.json", what = "sp")
 
 # Match data
-kivamap <- geo_join(borders, kiva_clean, 'name', "name")
-class(kivamap)
-View(kivamap)
+#kivamap <- geo_join(borders, kiva_clean, 'countries', "countries")
 
 
-kiva_clean$loan_total <- as.numeric(as.character(kiva_clean$loan_total))
-pal <- colorBin("Reds", c(1000, 55342225
-), na.color = "#808080")
+#kivaplots <- spTransform(kivamap, CRS("+proj=longlat +EPSG:4269"))
+
+
+#kiva_clean$loan_total <- as.numeric(as.character(kiva_clean$loan_total))
+#pal <- colorBin("Reds", c(1000, 55342225
+#), na.color = "#808080")
 #, alpha = FALSE, reverse = FALSE)
 
 
 # Create a popup
-country_popup <- paste0("<strong>Country: </strong>", 
-                      kivamap$name, 
-                      "<br><strong>Sum of loans: </strong>", 
-                      kivamap$loan_total)
+#country_popup <- paste0("<strong>Country: </strong>", 
+                      # kivamap$name, 
+                      # "<br><strong>Output: </strong>", 
+                      # kivamap$loan_total)
+mpi = fread('mpi.csv', nrows = -1, header = T, stringsAsFactors = TRUE)
+mpi$country = mpi$name
+kiva_clean = read.csv('~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/Kiva_clean.csv')
+kiva_clean = left_join(kiva_clean,mpi, by='country')
+
+#kiva_clean$X = NULL
 
 
+userchoice <- c('loan_total', 'countTotalBorrow', 'countReborrow', 'reborrow_ratio', 'MPI', 'Percent_in_Poverty')
 
-userchoice <- c('funded_total', 'loan_total', 'countTotalBorrow', 'countReborrow', 'reborrow_ratio', 'MPI', 'Percent_in_Poverty')
+countrychoice = c('All', kiva_clean$country)
 
-userchoice
-
+filtered_map = kiva_clean
 
 # Create a map
 #leaflet(kivamap) %>% 

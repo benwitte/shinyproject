@@ -17,40 +17,44 @@ library(sf)
 library(shinythemes)
 library(googleVis)
 library(RSQLite)
+library(dashboardthemes)
 
 
-#maybe ignore this stuff
-#Kivaclean = fread('~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/Kivafullyclean.csv', drop = 'V1')
-#kivaglob = Kivaclean[,c('lat','long','MPI')]
 
-
-#import geojson
-#borders = geojson_read("~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/countries.geo.json", what = "sp")
-
-# Match data
-#kivamap <- geo_join(borders, kiva_clean, 'countries', "countries")
-
-
-#kivaplots <- spTransform(kivamap, CRS("+proj=longlat +EPSG:4269"))
-
-
-#kiva_clean$loan_total <- as.numeric(as.character(kiva_clean$loan_total))
-#pal <- colorBin("Reds", c(1000, 55342225
-#), na.color = "#808080")
-#, alpha = FALSE, reverse = FALSE)
-
-
-# Create a popup
-#country_popup <- paste0("<strong>Country: </strong>", 
-                      # kivamap$name, 
-                      # "<br><strong>Output: </strong>", 
-                      # kivamap$loan_total)
 mpi = fread('mpi.csv', nrows = -1, header = T, stringsAsFactors = TRUE)
 mpi$country = mpi$name
-kiva_clean = read.csv('~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/Kiva_clean.csv')
-kiva_clean = left_join(kiva_clean,mpi, by='country')
+kiva_joined = read.csv('~/Desktop/NYCDSA/R/Shiny_App_Project/data-science-for-good-kiva-crowdfunding/Kiva_clean.csv')
+kiva_joined = left_join(kiva_joined,mpi, by='country')
+kiva_clean = kiva_joined
+kiva_clean$X = NULL
+kiva_clean$funded_total = NULL
+kiva_clean$name = NULL
+kiva_clean = kiva_clean %>% arrange(., country)
 
 #kiva_clean$X = NULL
+
+kivasummary = kiva_clean %>%
+  summarise(mean(kiva_clean$loan_total), 
+            mean(kiva_clean$countTotalBorrow),
+            mean(kiva_clean$countReborrow, na.rm = T),
+            mean(kiva_clean$reborrow_ratio, na.rm = T),
+            mean(kiva_clean$MPI, na.rm = T),
+            mean(kiva_clean$Percent_in_Poverty, na.rm = T))
+
+#test <- kiva_clean %>% filter(., country %in% c("All"))
+#transpose(test)
+
+
+kivasummaryasdf = transpose(data.frame(kivasummary))
+names(kivasummaryasdf)[names(kivasummaryasdf) == 'V1'] <- 'Global_Averages'
+kivasummaryasdf$Measure = c('Sum of Loans', 
+                            'Number of borrowers', 
+                            'Number of Repeat Borrowers', 
+                            'Repeat/First Time Borrower Ratio',
+                            'MPI',
+                            'Percent in Poverty')
+kivasummaryasdf =  kivasummaryasdf[c(2,1)]
+
 
 
 userchoice <- c('loan_total', 'countTotalBorrow', 'countReborrow', 'reborrow_ratio', 'MPI', 'Percent_in_Poverty')
@@ -58,20 +62,4 @@ userchoice <- c('loan_total', 'countTotalBorrow', 'countReborrow', 'reborrow_rat
 countrychoice = c('All', kiva_clean$country)
 
 filtered_map = kiva_clean
-
-# Create a map
-#leaflet(kivamap) %>% 
-#  addProviderTiles(providers$Stamen.TonerLite) %>%  
- # setView(lng = 00.00, lat = 00.00, zoom=0.5) %>%  
-#  addPolygons(color = "#444444", weight = 1, 
-              # opacity = 0.5, 
- #             fillOpacity = 0.7,
-#              fillColor = ~pal(kivamap$loan_total),
-#              popup = country_popup) %>%
-#  addLegend("bottomright", pal = pal, values = ~kivamap$loan_total, 
-#            opacity = 1,
-#            title = "Sum of Loans by Country")
-
-
-#kivamap$MPI
 
